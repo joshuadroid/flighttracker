@@ -11,12 +11,43 @@ import base64
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 
+def get_message(service, user_id, msg_id):
+
+    try:
+        message_list = service.users().messages().list(userId=user_id, id=msg_id, format='raw').execute()
+
+        msg_raw = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
+
+
+    except (errors.HttpError, error):
+        print("An Error has happened, panic! Erorr:") % error:
+
+
 
 
 def search_messages(service, user_id, search_string):
     
     try:
-        search_id = service.users().messages(userId=user_id, q=search_string).execute()
+        search_id = service.users().messages().list(userId=user_id, q=search_string).execute()
+
+        number_results = search_id['resultSizeEstimate']
+
+        final_list = []
+        if number_results > 0:
+            message_ids = search_id['messages']
+
+            for ids in message_ids:
+                final_list.append(ids['id'])
+
+        
+
+
+        else:
+            print('There were 0 results for that search string, returning an empty string')
+
+
+
+
 
 
     
