@@ -14,10 +14,22 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 def get_message(service, user_id, msg_id):
 
     try:
-        message_list = service.users().messages().list(userId=user_id, id=msg_id, format='raw').execute()
+        message_list = service.users().messages().get(userId=user_id, id=msg_id, format='raw').execute()
 
         msg_raw = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
 
+        msg_str = email.message_from_bytes(msg_raw)
+
+        content_types = msg_str.get_content_maintype()
+
+        if content_types == 'multipart':
+            #for multi parts
+            part1, part2 = msg_str.get_payload()
+            print(f'')
+            return part1.get_payload()
+                    
+        else:
+            return msg_str.get_payload()
 
     except (errors.HttpError, error):
         print("An Error has happened, panic! Erorr:") % error:
