@@ -2,12 +2,10 @@
 ## TODO filter out promoted
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-import pandas as pd
 from datetime import datetime
+import pandas as pd
 import os
 import sys
-
-app_path = os.path.dirname(sys.executable)
 
 now = datetime.now()
 month_day_year = now.strftime("%m%d%Y") #MMDDYYYY
@@ -36,12 +34,11 @@ date, time = date_time.split(',')
 time = time.strip()
 
 # Takes data to log in csv format
-my_dict = {"Date": date, "Time": time, "PicLink": container.text}
-posts = pd.DataFrame(my_dict)
+posts = pd.DataFrame({"Date": date, "Time": time, "PreviewLink": container}, index=[0])
 
 # Setting up File path
 file_name = f'freefolkposts-{month_day_year}.csv'
-final_path = os.path.join(app_path, file_name)
+final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
 posts.to_csv(final_path)
 
 
