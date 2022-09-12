@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import sys
 
+
 now = datetime.now()
 month_day_year = now.strftime("%m%d%Y") #MMDDYYYY
 
@@ -19,27 +20,43 @@ service = Service(executable_path=path)
 driver = webdriver.Chrome(service=service)
 driver.get(website)
 
-
-
-## //div[@data-testid='post-container'] -- to find all the posts on reddit page
-
-## driver.find_element(by="xpath", value='//div[@data-testid="post-container"]') 
-## //div[@class="rpBJOHq2PR60pnwJlUyP0"]/div[2]/ -- First Div controls which post you're looking at.. aka change 2 with variable
-## //div[@class="rpBJOHq2PR60pnwJlUyP0"]/div[2]/div[1]/div[1]/div[3]/div[2] -- you can get title and post link from this
-
-
-# Finds the top post and sends it. TODO make into a list and then loop to gather the top 3-5 posts.
-preview_pic = driver.find_element(by="xpath", value="//div[@data-testid='post-container']/div[3]/div[3]/div/div[2]/div/a/div/div/img").get_attribute("src")
-post_title = driver.find_element(by="xpath", value="//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").text
-post_link = driver.find_element(by="xpath", value="//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").get_attribute("href")
+preview_pic = driver.find_elements(by='xpath', value="//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[3]/div/div[2]/div/a/div/div/img")[0].get_attribute("src")
+post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").text
+post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").get_attribute("href")
 
 # Finds the date and time for logging the post
 date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 date, time = date_time.split(',')
 time = time.strip()
 
-# Takes data to log in csv format
+# Creates the initial DataFrame
 posts = pd.DataFrame({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, index=[0])
+
+div_counter = 3
+index_counter = 1
+for x in range(5):
+    try:
+        preview_pic = driver.find_elements(by='xpath', value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[3]/div/div[2]/div/a/div/div/img")[0].get_attribute("src")
+        # This try/except below is here to deal with if a flair is on the post. If there's no flair, it runs the first. If there is flair, it runs the second.
+        # TODO Could add to log the flair? Maybe add as a data point? 
+        try:
+            post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[1]/a").text
+            post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[1]/a").get_attribute("href")
+        except:
+            post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").text
+            post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").get_attribute("href")
+            print("Flair post detected!")
+        posts = posts.append({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, ignore_index=True)
+    except (IndexError):
+        print("Non-Image Post not logged")
+
+    div_counter += 1
+    index_counter += 1
+
+
+
+
+
 
 # Setting up File path
 file_name = f'freefolkposts-{month_day_year}.csv'
