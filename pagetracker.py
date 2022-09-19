@@ -7,34 +7,17 @@ from datetime import datetime
 import pandas as pd
 import os
 import sys
+# Python SQL toolkit and Object Relational Mapper
+from sqlalchemy import create_engine
+engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
+
 
 
 now = datetime.now()
 month_day_year = now.strftime("%m%d%Y") #MMDDYYYY
-
-website = 'https://www.reddit.com/r/freefolk/top/'
-
-path = '/Users/jawsh/Downloads/chromedriver'
-
-service = Service(executable_path=path)
-driver = webdriver.Chrome(service=service)
-driver.get(website)
-
-preview_pic = driver.find_elements(by='xpath', value="//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[3]/div/div[2]/div/a/div/div/img")[0].get_attribute("src")
-post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").text
-post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/a").get_attribute("href")
-
-# Finds the date and time for logging the post
-date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-date, time = date_time.split(',')
-time = time.strip()
-
-# Creates the initial DataFrame
-posts = pd.DataFrame({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, index=[0])
-
-div_counter = 3
+div_counter = 2
 index_counter = 1
-for x in range(5):
+def get_post(div_counter):
     try:
         preview_pic = driver.find_elements(by='xpath', value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[3]/div/div[2]/div/a/div/div/img")[0].get_attribute("src")
         # This try/except below is here to deal with if a flair is on the post. If there's no flair, it runs the first. If there is flair, it runs the second.
@@ -46,22 +29,73 @@ for x in range(5):
             post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").text
             post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").get_attribute("href")
             print("Flair post detected!")
-        posts = posts.append({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, ignore_index=True)
+        return [post_link, post_title, preview_pic]
     except (IndexError):
         print("Non-Image Post not logged")
 
+print(div_counter)
+website = 'https://www.reddit.com/r/freefolk/top/'
+
+path = '/Users/jawsh/Downloads/chromedriver'
+
+service = Service(executable_path=path)
+driver = webdriver.Chrome(service=service)
+driver.get(website)
+
+post_link, post_title, preview_pic = get_post(div_counter)
+
+
+# Finds the date and time for logging the post
+date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+date, time = date_time.split(',')
+time = time.strip()
+
+# Creates the initial DataFrame
+posts = pd.DataFrame({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, index=[0])
+print(div_counter)
+
+div_counter += 1
+
+print(div_counter)
+
+for x in range(5):
+    print("starting loop")
+    print(div_counter)
     div_counter += 1
+    
+    print(div_counter)
     index_counter += 1
+    try:
+        preview_pic = driver.find_elements(by='xpath', value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[3]/div/div[2]/div/a/div/div/img")[0].get_attribute("src")
+        try:
+            post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[1]/a").text
+            post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[1]/a").get_attribute("href")
+        except:
+            post_title = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").text
+            post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").get_attribute("href")
+            print("Flair post detected!")
+        
+    except (IndexError):
+        print("Non-Image Post not logged")
+
+    posts = posts.append({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, ignore_index=True)
+    
+    
 
 
 
 
 
 
-# Setting up File path
+
+# # Setting up File path
 file_name = f'freefolkposts-{month_day_year}.csv'
 final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
 posts.to_csv(final_path)
+
+# TODO put into DB
+# posts.to_sql('posts', con=engine, )
+
 
 
 driver.quit()
