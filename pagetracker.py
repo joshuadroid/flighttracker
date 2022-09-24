@@ -9,6 +9,9 @@ import os
 import sys
 # Python SQL toolkit and Object Relational Mapper
 from sqlalchemy import create_engine
+from local_settings import postgresql as settings
+import psycopg2
+
 engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
 
 
@@ -83,19 +86,13 @@ for x in range(5):
     
 
 
-
-
-
-
-
 # # Setting up File path
 file_name = f'freefolkposts-{month_day_year}.csv'
 final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
 posts.to_csv(final_path)
 
+
+
+
 # TODO put into DB
-# posts.to_sql('posts', con=engine, )
-
-
-
 driver.quit()
