@@ -10,10 +10,18 @@ import sys
 # Python SQL toolkit and Object Relational Mapper
 from sqlalchemy import create_engine
 from local_settings import postgresql as settings
-import psycopg2
+from local_settings import cronitor_api_key
+# import psycopg2
+import cronitor
 
-engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
+cronitor.api_key = cronitor_api_key
+# engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
 
+#Or, you can embed telemetry events directly in your code
+monitor = cronitor.Monitor('pagetracker')
+
+# the job has started
+monitor.ping(state='run')
 
 
 now = datetime.now()
@@ -33,7 +41,7 @@ def get_post(div_counter):
             post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").get_attribute("href")
             print("Flair post detected!")
         return [post_link, post_title, preview_pic]
-    except (IndexError):
+    except (TypeError, IndexError):
         print("Non-Image Post not logged")
 
 print(div_counter)
@@ -78,8 +86,10 @@ for x in range(5):
             post_link = driver.find_element(by="xpath", value=f"//div[@class='rpBJOHq2PR60pnwJlUyP0']/div[{div_counter}]/div[1]/div[1]/div[3]/div[2]/div[2]/a").get_attribute("href")
             print("Flair post detected!")
         
-    except (IndexError):
+    except (TypeError, IndexError):
         print("Non-Image Post not logged")
+        # the job has completed successfully
+        monitor.ping(state='fail')
 
     posts = posts.append({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, ignore_index=True)
     
@@ -91,7 +101,8 @@ file_name = f'freefolkposts-{month_day_year}.csv'
 final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
 posts.to_csv(final_path)
 
-
+# the job has completed successfully
+monitor.ping(state='complete')
 
 
 # TODO put into DB
