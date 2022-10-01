@@ -45,8 +45,6 @@ print(counter)
 new_df.loc[counter, 'texted'] = 'Y'
 new_df = new_df.set_index("Link")
 new_df.to_sql('textlist', con=engine, if_exists='replace')
-new_df
-
 
 message = client.messages \
             .create(
@@ -55,7 +53,11 @@ message = client.messages \
                 to=to_number
             )
 
-print(message.sid)
+m = message.sid
 
-# the job has completed successfully
-monitor.ping(state='complete')
+if not m:
+    monitor.ping(state='fail')
+else:
+    print(message.sid)
+    # the job has completed successfully
+    monitor.ping(state='complete')

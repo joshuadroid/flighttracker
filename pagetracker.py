@@ -1,6 +1,4 @@
 ## GOAL: Gather the top 3 posts from r/freefolk and text them to me on Monday, Tuesday, and Wednesday
-## TODO change to 3 posts instead of 1
-## TODO filter out promoted
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from datetime import datetime
