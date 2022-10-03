@@ -16,7 +16,7 @@ cronitor.api_key = cronitor_api_key
 monitor = cronitor.Monitor('sendtext')
 monitor.ping() # send a heartbeat event
 
-engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
+engine = create_engine('sqlite:////Users/jawsh/devprojects/flighttracker/freefolkposts.sqlite', echo=False)
 
 new_df = pd.DataFrame(engine.execute('SELECT * FROM textlist ORDER BY Date DESC').fetchall())
 
@@ -44,11 +44,12 @@ for x in range(100):
 print(counter)
 new_df.loc[counter, 'texted'] = 'Y'
 new_df = new_df.set_index("Link")
-new_df.to_sql('textlist', con=engine, if_exists='replace')
+new_df.to_sql('textlist', con=engine, if_exists='append')
 
 message = client.messages \
             .create(
-                body=f"{post_date}:{title} {preview_pic}",
+                body=f"""{post_date}: {title} 
+                {preview_pic}""",
                 from_= messaging_service_sid,
                 to=to_number
             )

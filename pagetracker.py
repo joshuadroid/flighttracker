@@ -13,7 +13,8 @@ from local_settings import cronitor_api_key
 import cronitor
 
 cronitor.api_key = cronitor_api_key
-# engine = create_engine('sqlite:///freefolkposts.sqlite', echo=False)
+db_path = "/Users/jawsh/devprojects/flighttracker/"
+engine = create_engine('sqlite:////Users/jawsh/devprojects/flighttracker/freefolkposts.sqlite', echo=False)
 
 #Or, you can embed telemetry events directly in your code
 monitor = cronitor.Monitor('pagetracker')
@@ -86,18 +87,26 @@ for x in range(5):
         
     except (TypeError, IndexError):
         print("Non-Image Post not logged")
-        # the job has completed successfully
         monitor.ping(state='fail')
+        continue
 
     posts = posts.append({"Date": date, "Time": time, "Preview Pic": preview_pic, "Title": post_title, "Link": post_link}, ignore_index=True)
     
     
+print(posts)
+
+posts = posts[['Link', 'Title', 'Preview Pic', 'Date', 'Time']]
+posts.loc[:, 'texted'] = ''
+posts = posts.drop_duplicates().dropna()
+posts = posts.set_index("Link")
+posts.to_sql('textlist', con=engine, if_exists='append')
 
 
-# # Setting up File path
-file_name = f'freefolkposts-{month_day_year}.csv'
-final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
-posts.to_csv(final_path)
+# # # # This was the old way of exporting a csv 
+# # # Setting up File path
+# file_name = f'freefolkposts-{month_day_year}.csv'
+# final_path = os.path.join('/Users/jawsh/Downloads/', file_name)
+# posts.to_csv(final_path)
 
 # the job has completed successfully
 monitor.ping(state='complete')
